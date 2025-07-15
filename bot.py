@@ -25,7 +25,7 @@ async def verv(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     kode = f"ref_{user_id}"
     await update.message.reply_text(
-        f"🔗 Din vervelenke:
+        f"🔗 Din vervelenke:"
 
 https://t.me/{context.bot.username}?start={kode}
 
