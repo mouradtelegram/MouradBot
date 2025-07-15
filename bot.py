@@ -4,7 +4,7 @@ import logging
 import re
 
 # 🔐 Bot-token og admin-ID
-BOT_TOKEN = "123456789:ABCdefGhIJKLmnoPQRstuVwxy"
+BOT_TOKEN = "7552419253:AAGo1cYWjM-Lkl21W10U2Okc3BJqJUgeaV0"
 ADMIN_ID = 7552419253  # ← DIN Telegram bruker-ID
 STRIPE_URL = "https://buy.stripe.com/6oU4gydqR0V02sabJM"  # ← Link til aktivering
 
@@ -94,8 +94,7 @@ async def aktiver(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # 🧠 Start boten
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-
+    app = ApplicationBuilder().token("7552419253:AAGo1cYWjM-Lkl21W10U2Okc3BJqJUgeaV0").build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("aktiver", aktiver))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, melding))
