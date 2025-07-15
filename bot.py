@@ -6,7 +6,7 @@ import re
 # 🔐 Bot-token og admin-ID
 BOT_TOKEN = "7552419253:AAGo1cYWjM-Lkl21W10U2Okc3BJqJUgeaV0"
 ADMIN_ID = 7552419253  # ← DIN Telegram bruker-ID
-STRIPE_URL = "https://buy.stripe.com/6oU4gydqR0V02sabJM"  # ← Link til aktivering
+STRIPE_URL = "https://buy.stripe.com/6oU4gydqR0V02sabJM38400"  # ← Link til aktivering
 
 # 🔧 Logging
 logging.basicConfig(level=logging.INFO)
