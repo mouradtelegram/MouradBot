@@ -28,7 +28,7 @@ async def meny(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not bruker["aktivert"]:
         keyboard = [[InlineKeyboardButton("🔐 Aktiver konto (250 kr)", url=STRIPE_URL)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text("❌ Du må aktivere kontoen din for å begynne.
+        await update.message.reply_text("❌ Du må aktivere kontoen din for å begynne."
 
 Trykk under for å betale:", reply_markup=reply_markup)
         return
