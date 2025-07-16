@@ -4,7 +4,7 @@ import logging
 import re
 
 # Bot-token og admin-ID
-BOT_TOKEN = "7552419253:AAGo1cYWjM-Lkl21W10U2Okc3BJqJUgeaV0"
+BOT_TOKEN = "7552419253:AAFZYXKoI0iylsux4XumdZB91ivjcFTIlJg"
 ADMIN_ID = 7552419253
 STRIPE_URL = "https://buy.stripe.com/6oU4gydqR0V02sabJM38400"
 
