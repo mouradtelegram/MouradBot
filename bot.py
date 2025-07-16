@@ -3,79 +3,91 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Callb
 import logging
 import re
 
-# 🔐 Bot-token og admin-ID
+# Bot-token og admin-ID
 BOT_TOKEN = "7552419253:AAGo1cYWjM-Lkl21W10U2Okc3BJqJUgeaV0"
-ADMIN_ID = 7552419253  # ← DIN Telegram bruker-ID
-STRIPE_URL = "https://buy.stripe.com/6oU4gydqR0V02sabJM38400"  # ← Link til aktivering
+ADMIN_ID = 7552419253
+STRIPE_URL = "https://buy.stripe.com/6oU4gydqR0V02sabJM38400"
 
-# 🔧 Logging
+# Logging
 logging.basicConfig(level=logging.INFO)
 
-# 📦 Midlertidig bruker-database (i minnet)
+# Midlertidig bruker-database
 brukere = {}
 
-# 🚀 /start-kommando
+# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     if user_id not in brukere:
-        brukere[user_id] = {"poeng": 0, "aktivert": False}
+        brukere[user_id] = {"poeng": 0, "aktivert": True, "likt": 0}
     await meny(update, context)
 
-# 📋 Meny
+# Meny
 async def meny(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
-    bruker = brukere.get(user_id, {"poeng": 0, "aktivert": False})
+    bruker = brukere.get(user_id, {"poeng": 0, "aktivert": True, "likt": 0})
 
     if not bruker["aktivert"]:
-        keyboard = [
-            [InlineKeyboardButton("💳 Aktiver konto (250 kr)", url=STRIPE_URL)]
-        ]
+        keyboard = [[InlineKeyboardButton("💳 Aktiver konto (250 kr)", url=STRIPE_URL)]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text("❌ Du må aktivere kontoen din først. Trykk under for å betale:", reply_markup=reply_markup)
         return
 
     keyboard = [
-        [InlineKeyboardButton("🎯 Få poeng", callback_data="oppdrag")],
-        [InlineKeyboardButton("🎬 YouTube", callback_data="yt")],
-        [InlineKeyboardButton("📊 Poeng", callback_data="poeng")],
+        [InlineKeyboardButton("🎬 Send YouTube-lenke for å få poeng", callback_data="yt")],
+        [InlineKeyboardButton("👥 Verv en venn", callback_data="verv")],
+        [InlineKeyboardButton("📊 Mine poeng", callback_data="poeng")],
         [InlineKeyboardButton("💸 Uttak", callback_data="uttak")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("Velg et alternativ:", reply_markup=reply_markup)
 
-# 🖱️ Knappetrykk
+# Knappetrykk
 async def knappetrykk(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     user_id = str(query.from_user.id)
+    bruker = brukere.get(user_id, {"poeng": 0, "aktivert": True, "likt": 0})
 
-    if not brukere.get(user_id, {}).get("aktivert"):
-        await query.edit_message_text("❌ Du må aktivere kontoen din først.")
-        return
+    if query.data == "poeng":
+        await query.edit_message_text(f"📊 Du har {bruker['poeng']} poeng.")
 
-    if query.data == "oppdrag":
-        brukere[user_id]["poeng"] += 10
-        await query.edit_message_text(f"✅ Du fikk 10 poeng! Total: {brukere[user_id]['poeng']}")
-
-    elif query.data == "poeng":
-        await query.edit_message_text(f"📊 Du har {brukere[user_id]['poeng']} poeng.")
+    elif query.data == "verv":
+        bruker["poeng"] += 50
+        await query.edit_message_text("👥 Du fikk 50 poeng for å verve en venn!")
 
     elif query.data == "uttak":
-        await query.edit_message_text("✅ Uttaksforespørsel mottatt! En admin vil kontakte deg.")
+        if bruker["poeng"] < 500:
+            await query.edit_message_text("🚫 Du må ha minst 500 poeng for å kunne ta ut penger.")
+        else:
+            bruker["aktivert"] = False
+            await query.edit_message_text(
+                "💳 For å fullføre uttaket og fortsette å bruke tjenesten, må du betale 250 kr:",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Betal nå", url=STRIPE_URL)]])
+            )
 
     elif query.data == "yt":
         await query.edit_message_text("📩 Send meg en YouTube-lenke som melding!")
 
-# 💬 Håndter YouTube-lenker
+    elif query.data == "liker":
+        bruker["poeng"] += 10
+        bruker["likt"] += 1
+        if bruker["likt"] % 5 == 0:
+            bruker["poeng"] += 100
+        await query.edit_message_text(f"✅ Du fikk poeng! Total: {bruker['poeng']}")
+
+# YouTube-lenker
 async def melding(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     yt_match = re.search(r"(https?://)?(www\.)?(youtube\.com|youtu\.be)/\S+", text)
     if yt_match:
-        await update.message.reply_text("✅ YouTube-lenke oppdaget! Takk for at du delte.")
+        keyboard = [
+            [InlineKeyboardButton("👍 Liker", callback_data="liker"), InlineKeyboardButton("👎 Liker ikke", callback_data="liker")]
+        ]
+        await update.message.reply_text("Hva synes du om videoen?", reply_markup=InlineKeyboardMarkup(keyboard))
     else:
         await update.message.reply_text("❓ Jeg forstår bare YouTube-lenker eller bruk menyen.")
 
-# 🔓 Aktiver bruker (admin-kommando)
+# Aktiver bruker (admin)
 async def aktiver(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         await update.message.reply_text("❌ Du har ikke tilgang.")
@@ -92,12 +104,11 @@ async def aktiver(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("🚫 Bruker ikke funnet.")
 
-# 🧠 Start boten
+# Start boten
 if __name__ == "__main__":
-    app = ApplicationBuilder().token("7552419253:AAGo1cYWjM-Lkl21W10U2Okc3BJqJUgeaV0").build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("aktiver", aktiver))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, melding))
     app.add_handler(CallbackQueryHandler(knappetrykk))
-
     app.run_polling()
